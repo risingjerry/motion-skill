@@ -1,0 +1,14 @@
+name: Feature request
+description: Suggest a transition, check, template or workflow step
+labels: [enhancement]
+body:
+  - type: textarea
+    id: want
+    attributes:
+      label: What should the skill do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why does it matter, and what do you do today instead?

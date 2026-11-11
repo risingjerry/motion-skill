@@ -1,7 +1,7 @@
 {
-  "name": "motion-ad-skill",
+  "name": "motion-skill",
   "version": "0.1.0",
-  "description": "用代码做 8–20 秒产品动效广告片的 Claude Skill：分镜、HTML/Blender 渲染 4K、逐帧检查、配乐音效混音。",
+  "description": "用代码做 4K 动效短片的 Claude Skill（产品发布片、App 宣传片、logo 动画、3D 产品镜头、讲解动效、接实拍的转场）：分镜、HTML/Blender 逐帧渲染、逐帧检查、配乐音效混音。",
   "private": true,
   "type": "module",
   "license": "MIT",

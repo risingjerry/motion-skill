@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RENDER = path.join(ROOT, 'scripts', 'render.mjs');
 const PAGE = path.join(ROOT, 'tests', 'fixtures', 'tiny.html');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'motion-ad-test-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'motion-skill-test-'));
 const hasBrowser = spawnSync('node', [RENDER, 'doctor'], { encoding: 'utf8' }).status === 0;
 const opts = { skip: hasBrowser ? false : '没有可用的 Chrome/Chromium' };
 

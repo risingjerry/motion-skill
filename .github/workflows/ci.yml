@@ -1,0 +1,43 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: test (Node ${{ matrix.node }}, Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node: "18"
+            python: "3.9"
+          - node: "22"
+            python: "3.13"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Install dependencies
+        run: |
+          npm ci
+          python -m pip install -r requirements.txt
+      - name: Doctor
+        run: python scripts/doctor.py
+      - name: Render tests (Node)
+        run: node --test tests/render.test.mjs
+      - name: Script tests (Python)
+        run: python -m unittest discover -s tests -v
+      - name: End-to-end example (1080p)
+        run: python examples/minimal/build.py --scale 1 --out "$RUNNER_TEMP/example"

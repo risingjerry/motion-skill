@@ -1,171 +1,179 @@
-简体中文 · [English](#english)
+<div align="center">
 
-# motion-ad-skill：让 Claude 用代码做 4K 产品动效广告片
+# motion-skill
 
-一个开源的 Claude Skill。装上以后，对 Claude 说“给我的 App 做一条 10 秒的动效广告”，它会先出带编号的分镜给你看，
-你点头后用 HTML（或 Blender）一帧一帧渲出 **3840×2160 的成片**，逐帧检查，最后配上配乐和音效。
-**全程不用任何 AI 生图、生视频**，画面全是代码和你的真素材。
+**A Claude Skill that makes 4K motion graphics videos with code — no AI video generation.**
 
-![示例成片：硬币翻面变成 App 图标，展开成手机界面，最后收回成图标加字标](docs/demo.gif)
+Product launch videos, app promos, logo animations, 3D product shots, explainer animations, silhouette transitions into live footage. Tell Claude "make a 10-second launch video for my app". It drafts a numbered storyboard, waits for your OK, builds the animation as an HTML page (or a Blender scene), renders it frame by frame to 3840×2160, checks every transition, then adds music and sound effects on the beat.
 
-上面这条 10 秒示例（虚构的记账 App “Tallybird”）就是用仓库自带的脚本从零做出来的：
-`python3 examples/minimal/build.py`，在一台 8 核笔记本上约 1 分钟出 4K 有声成片。
+[![CI](https://github.com/risingjerry/motion-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/risingjerry/motion-skill/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-7C5CFF.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/risingjerry/motion-skill?color=E8735F)](https://github.com/risingjerry/motion-skill/releases)
+[![GitHub stars](https://img.shields.io/github/stars/risingjerry/motion-skill?style=social)](https://github.com/risingjerry/motion-skill/stargazers)
 
-## 安装
+English · [简体中文](README.zh-CN.md)
 
-需要：Node.js 18+、Python 3.9+、ffmpeg、Google Chrome（或 Chromium）。Blender 可选。
+![Example promo: a coin flips into an app icon, unfolds into a phone screen, then folds back into the icon and wordmark](docs/demo.gif)
+
+</div>
+
+The 10-second promo above (for "Tallybird", a made-up budgeting app) was built from scratch by the example script in this repo: `python3 examples/minimal/build.py` renders it to 4K with sound in about a minute on an 8-core laptop. Every pixel comes from code and your own assets — no image or video model is involved.
+
+## Install
+
+Needs Node.js 18+, Python 3.9+, ffmpeg and Google Chrome (or Chromium). Blender is optional.
 
 ```bash
-git clone https://gitee.com/risingjerry/motion-ad-skill.git ~/.claude/skills/motion-ad
-cd ~/.claude/skills/motion-ad
+git clone https://github.com/risingjerry/motion-skill.git ~/.claude/skills/motion
+cd ~/.claude/skills/motion
 npm install
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python scripts/doctor.py
 ```
 
-应该看到每一项前面是 `OK`，最后一行是“必需的都齐了，可以开始。”；缺什么它会写出怎么装。
-Windows 用 `%USERPROFILE%\.claude\skills\motion-ad`，把 `.venv/bin/` 换成 `.venv\Scripts\`。
+Every line of the doctor report should start with `OK`, and the last line says all required pieces are present. If something is missing, it prints how to install it. On Windows use `%USERPROFILE%\.claude\skills\motion` and `.venv\Scripts\` instead of `.venv/bin/`.
 
-## 先跑一遍示例
+<details>
+<summary>Install with <code>npx skills</code> instead</summary>
+
+```bash
+npx skills add risingjerry/motion-skill -g -a claude-code
+cd ~/.claude/skills/motion
+npm install
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+```
+
+`-a claude-code` puts the skill in `~/.claude/skills/motion`. Without `-a`, the CLI asks which agents to install for. The skill runs its own scripts, so the `npm install` / `pip install` step is still needed in the installed folder.
+
+</details>
+
+## Run the example first
 
 ```bash
 .venv/bin/python examples/minimal/build.py
 ```
 
-会在 `examples/minimal/out/` 里生成：
+It writes to `examples/minimal/out/`:
 
-| 文件 | 是什么 |
+| File | What it is |
 |---|---|
-| `storyboard.png` | 带编号的分镜板（真正做片时，这一步要等对方点头） |
-| `ad.mp4` | 3840×2160、30 fps 的无声成片 |
-| `frames.jpg` + `frames/` | 从 4K 成片里抽的 3 帧（原尺寸 PNG） |
-| `ad-sound.mp4` | 加了配乐和音效的成片（视频流原样拷贝，没有重新编码） |
-| `mix.wav` | 混音，-14 LUFS、真峰值 ≤ -1 dBTP |
+| `storyboard.png` | Numbered storyboard (on a real job, Claude stops here until you approve) |
+| `ad.mp4` | 3840×2160, 30 fps silent cut |
+| `frames.jpg` + `frames/` | 3 frames pulled from the 4K cut (full-size PNGs) |
+| `ad-sound.mp4` | The cut with music and sound effects (video stream copied, not re-encoded) |
+| `mix.wav` | The mix, -14 LUFS, true peak ≤ -1 dBTP |
 
-终端里会打印布局检查（`LAYOUT_CHECK GREEN`）和混音报告（配乐最重的一拍落在第几秒、响度多少）。
+The terminal prints the layout check (`LAYOUT_CHECK GREEN`) and a mix report (where the music's biggest hit lands and the loudness). Add `--scale 1` for a quick 1080p run.
 
-![分镜板：6 个编号镜头，每格写着时间、画面、动作、怎么变成下一镜](docs/storyboard.png)
+![Storyboard: six numbered shots, each with timing, picture, action and how it turns into the next shot](docs/storyboard.png)
 
-## 在 Claude Code 里用
+## Use with Claude Code, Codex and other agents
 
-装到 `~/.claude/skills/motion-ad` 后，Claude Code 会自动发现这个 Skill。直接说：
+Once it is in `~/.claude/skills/motion`, Claude Code finds the skill by itself. Just ask:
 
-- “用 motion-ad 给我的记账 App 做一条 12 秒的动效广告，logo 在 `assets/logo.svg`，截图在 `assets/screens/`。”
-- “我有耳机充电盒的 glb 模型，做一条 Blender 单灯棚拍的开盖展示，先给我分镜。”
-- “把第 3 镜到第 4 镜的变形放慢一点，配乐最重的一拍对到图标落定。”
+- "Use the motion skill to make a 12-second launch video for my budgeting app. The logo is `assets/logo.svg`, screenshots are in `assets/screens/`."
+- "I have a GLB model of my earbuds case. Make a Blender single-light studio shot of it opening — show me the storyboard first."
+- "Animate our logo for a 5-second intro, and make a 20-second explainer of how sync works using our real screenshots."
+- "Slow down the morph from shot 3 to shot 4, and land the music's biggest hit on the icon."
 
-Codex、Cursor 等其他 Agent 读仓库根目录的 `AGENTS.md`。
+Codex, Cursor and other agents read [`AGENTS.md`](AGENTS.md) at the repo root. The skill instructions ([`SKILL.md`](SKILL.md), [`references/`](references/)) are written in Chinese; Claude and other modern agents follow them fine in any language you talk to them in.
 
-## 它会怎么做
+## What it does
 
-1. **问清楚、备真料**：真 logo、真机截图（先抹掉个人信息）、品牌色。实物产品先要实物照片。
-2. **出编号分镜，等你点头**：`render.mjs board` 出一张分镜板。没点头不做成片。
-3. **写页面**：从 `templates/2d.html`（平面）或 `templates/3d.html`（CSS 3D）起步，所有节拍集中在一处。
-4. **逐帧自查**：抽每个转场的 3–4 帧拼图看；脚本量文字有没有压到物体、主体是否居中；3D 查穿模、转速、合盖接缝。
-5. **只出 4K**：`render.mjs video --scale 2`。
-6. **最后加声音**：配乐最重的一拍对准关键落点，音效按节拍放，音效响时配乐让路，响度做到 -14 LUFS。
+1. **Asks, then collects real assets** — the real logo, real screenshots (personal info removed), brand colors. For a physical product, real photos first.
+2. **Numbered storyboard, then waits for you** — `render.mjs board` draws one storyboard image. No final render without your OK.
+3. **Builds the page** — starts from `templates/2d.html` (flat) or `templates/3d.html` (CSS 3D); every beat lives in one place.
+4. **Checks frame by frame** — pulls 3–4 frames from every transition into a contact sheet; scripts measure whether text overlaps the subject and whether the subject stays centered; for 3D, mesh collisions, rotation speed and lid seams.
+5. **Renders 4K only** — `render.mjs video --scale 2`.
+6. **Adds sound last** — the music's biggest hit lands on the key moment, effects sit on the beats, music ducks under effects, loudness hits -14 LUFS.
 
-做片子的规矩（每一镜从上一镜变出来、动作放正中、画面一直在动、3D 只用一盏灯、结尾只留图标和字标……）写在 [`SKILL.md`](SKILL.md) 和 [`references/`](references/)。
+The craft rules (every shot morphs out of the previous one, action stays at the center, the frame never freezes, one light for 3D, end on the icon and wordmark only…) are in [`SKILL.md`](SKILL.md) and [`references/`](references/).
 
-## 三层
+## Three levels
 
-| 层 | 画面 | 工具 |
+| Level | On screen | Tools |
 |---|---|---|
-| 1. 平面动效 | 真 logo、截图、形状一路变形 | `templates/2d.html`、`scripts/render.mjs` |
-| 2. 浏览器 3D + 接实拍 | 界面卡片在三维空间里、镜头穿行；剪影转场接真人实拍 | `templates/3d.html`、`scripts/silhouette.py` |
-| 3. Blender 棚拍 | 实物产品模型、一盏灯、真实材质 | `scripts/blender/studio.py`、`motion_check.py`、`seam_check.py` |
+| 1. Flat motion | Real logo, screenshots and shapes morphing into each other | `templates/2d.html`, `scripts/render.mjs` |
+| 2. Browser 3D + live footage | UI cards in 3D space with a moving camera; silhouette transitions into real footage | `templates/3d.html`, `scripts/silhouette.py` |
+| 3. Blender studio | Physical product model, one light, real materials | `scripts/blender/studio.py`, `motion_check.py`, `seam_check.py` |
 
-## 脚本
+## Scripts
 
-| 脚本 | 用途 |
+| Script | Purpose |
 |---|---|
-| `scripts/render.mjs` | HTML → 静帧 / 4K mp4 / 元素位置记录 / 分镜板 |
-| `scripts/sheet.py` | 按时间从成片原分辨率抽帧，拼成检查图 |
-| `scripts/layout_check.py` | 文字离主体 ≥ 40 px（4K）、主体居中 |
-| `scripts/seam_check.py` | 两个部件在真实机位下的接缝错位 ≤ 1 px |
-| `scripts/blender/studio.py` | 单灯棚拍 + EEVEE/Cycles 渲染，吃 GLB/glTF/USDZ/OBJ/FBX/STL/PLY，`--demo` 自带示例模型 |
-| `scripts/blender/motion_check.py` | 逐帧穿模（BVH）、角速度 ≤ 6°/帧、转速不跳 |
-| `scripts/silhouette.py` | 抠人蒙版（macOS Vision，可选）→ 平滑矢量剪影，从局部特写拉开 |
-| `scripts/audio/synth.py` | 代码合成音效包和配乐底（免版权） |
-| `scripts/audio/mix.py` | 配乐对齐落点、音效按节拍放、侧链让路、响度归一化、合进视频 |
-| `scripts/encode.py` | 逐帧 PNG → mp4 |
-| `scripts/doctor.py` | 检查依赖（`--json` 给 Agent 读） |
+| `scripts/render.mjs` | HTML → stills / 4K mp4 / element position probe / storyboard board |
+| `scripts/sheet.py` | Pull frames by time from the full-resolution cut into a contact sheet |
+| `scripts/layout_check.py` | Text ≥ 40 px from the subject (at 4K), subject centered |
+| `scripts/seam_check.py` | Seam offset between two parts at the real camera angle ≤ 1 px |
+| `scripts/blender/studio.py` | Single-light studio + EEVEE/Cycles render; reads GLB/glTF/USDZ/OBJ/FBX/STL/PLY; `--demo` ships a sample model |
+| `scripts/blender/motion_check.py` | Per-frame mesh collisions (BVH), angular speed ≤ 6°/frame, no speed jumps |
+| `scripts/silhouette.py` | Person mask (macOS Vision, optional) → smooth vector silhouette, pulling out from a close-up |
+| `scripts/audio/synth.py` | Code-synthesized sound-effect pack and music bed (royalty-free) |
+| `scripts/audio/mix.py` | Align music to the hit, place effects on beats, sidechain ducking, loudness normalization, mux into the video |
+| `scripts/encode.py` | PNG frames → mp4 |
+| `scripts/doctor.py` | Dependency check (`--json` for agents) |
 
-## 限制
+Check scripts print `... GREEN` or `... RED` on their last line and exit 0 (green), 1 (red) or 2 (usage error).
 
-- **速度**：HTML 动效 10 秒 4K 约 1–3 分钟；Blender EEVEE 4K 每帧几秒到十几秒，一条 15 秒的 3D 片可能要一小时。同时只跑一个 4K 任务，否则容易卡死电脑。
-- **剪影的自动抠像只在 macOS 14+ 上能用**（系统自带的 Vision）。其他系统用 rembg、MediaPipe 或剪辑软件导出黑白蒙版，脚本照样能画剪影。
-- **Blender 是可选的**：没有它，第 1、2 层照常用。
-- **声音没有“听”过**：脚本能对齐时间、测响度，但好不好听要人戴耳机听。
-- **不附带任何品牌素材、3D 模型、音效库或音乐**。示例只用自己画的 SVG 和代码合成的声音；你的素材需要你自己有授权。
+## Limits
 
-## 常见问题
+- **Speed**: a 10-second HTML piece renders to 4K in about 1–3 minutes; Blender EEVEE at 4K takes a few to a dozen seconds per frame, so a 15-second 3D shot can take an hour. Run one 4K job at a time, or the machine may stall.
+- **Automatic person masks need macOS 14+** (the built-in Vision framework). Elsewhere, export a black-and-white mask with rembg, MediaPipe or your editor; the silhouette script works the same.
+- **Blender is optional**: levels 1 and 2 work without it.
+- **Nobody "listened" to the mix**: scripts align timing and measure loudness, but whether it sounds good needs a human with headphones.
+- **No brand assets, 3D models, sound libraries or music are included.** The example uses a hand-made SVG and code-synthesized sound. You need the rights to your own assets.
+- Tested by the author on macOS; CI runs the tests and the example on Ubuntu.
 
-### 不用 AI 生成视频，怎么做出动效广告？
-画面是一个 HTML 页面（或 Blender 场景），每一帧由时间算出来；脚本让浏览器按时间逐帧截图，再用 ffmpeg 编成 4K 视频。
+## FAQ
 
-### 需要会写代码、会用 Blender 吗？
-不需要。代码由 Claude 写，Blender 在后台运行，你不用打开它。你要做的是提供真素材、看分镜、提意见。
+### How do I make a product video or motion graphics without AI video generation?
+Write the animation as code. Here each frame is an HTML page (or Blender scene) computed from time `t`; a headless browser captures every frame and ffmpeg encodes them to 4K. Changing "a bit slower here" means changing one number and re-rendering.
 
-### 能做多长的片子？
-设计目标是 8–20 秒的广告片。更长也能渲染，但这套流程（每一镜都从上一镜变出来）适合短片。
+### Can Claude Code make videos?
+Yes, with this skill. Claude writes the animation page, renders it with the bundled scripts, checks the frames itself and mixes the sound. You provide real assets and approve the storyboard.
 
-### 为什么一定要先出分镜？
-分镜阶段改一句话就是改一个镜头，渲染之后再改要重来。编号让你能精确地说“3 变 4 太快”。
+### Do I need to know how to code or use Blender?
+No. Claude writes the code and runs Blender in the background; you never open it. Your job is to supply real assets, look at the storyboard and give feedback.
 
-### 怎么让配乐的高潮正好落在画面关键时刻？
-`mix.py` 会自动找配乐里最重的一拍（或你手动写秒数），把整首配乐平移到让它落在你指定的节拍上。只平移，不变速、不变调。
+### How long can the videos be?
+It is designed for short pieces — launch videos, promos, logo intros, product shots, explainer segments; the rules were tuned on 8–20 second videos. Longer renders work, but the workflow (every shot morphs out of the previous one) suits short pieces.
 
-### 可以用别人品牌的 logo 做吗？
-只给你拥有或获准使用的品牌做。练习作品不要冒充官方、不要拿去投放。
+### Why a storyboard first?
+At the storyboard stage, changing a sentence changes a shot; after rendering, the same change means starting over. Numbered shots let you say exactly "3 to 4 is too fast".
 
-### 在 Windows 上能用吗？
-HTML 渲染、检查脚本、声音脚本、Blender 部分都是跨平台写的；作者只在 macOS 上实测过。剪影的自动抠像只支持 macOS。
+### How does the music's climax land on the key moment?
+`mix.py` finds the strongest hit in the music (or takes the second you give it) and shifts the whole track so that hit lands on the beat you name. It only shifts — no time-stretching, no pitch change.
 
-## 数据和隐私
+### Can I use another brand's logo?
+Only for brands you own or are allowed to use. Practice pieces must not pose as official work or be run as ads.
 
-所有脚本都在本机运行，不联网（`npm install` / `pip install` 装依赖时除外）、不上传任何文件、不需要账号或密钥。
-渲染用的是本机的无头浏览器和一个临时的空白浏览器配置，不会读你日常浏览器的数据。
+### Does it work on Windows or Linux?
+The HTML rendering, check scripts, sound scripts and Blender parts are written to be cross-platform, and CI runs them on Linux. The author has only tested on macOS. Automatic person masks are macOS-only.
 
-## 问题反馈
+## Data and privacy
 
-遇到 bug 或有想法，在 Gitee 仓库提 Issue，附上 `python3 scripts/doctor.py --json` 的输出和出错的命令。
+Everything runs on your machine. Nothing goes online (except `npm install` / `pip install` fetching dependencies), no file is uploaded, and no account or key is needed. Rendering uses a local headless browser with a fresh, empty profile, so it never reads your everyday browser data.
 
-## 卸载
+## Uninstall
 
 ```bash
-rm -rf ~/.claude/skills/motion-ad
+rm -rf ~/.claude/skills/motion
 ```
 
-## 致谢
+## Support, contributing and security
 
-思路受 Rourke（GenHQ）的视频启发：https://www.youtube.com/watch?v=cDb-wPq0Iyk
-本仓库的文字和代码都是独立编写的。
+Questions, bug reports and ideas are welcome in [Issues](https://github.com/risingjerry/motion-skill/issues) — include the output of `python3 scripts/doctor.py --json` and the failing command. See [CONTRIBUTING.md](CONTRIBUTING.md). Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
-## 许可（License）
+## Credits
 
-[MIT](LICENSE)。示例里的 Tallybird 名字和 logo 是虚构的，随仓库一起按 MIT 使用；`synth.py` 生成的声音同样可以商用。
+The idea was inspired by a video from Rourke (GenHQ): https://www.youtube.com/watch?v=cDb-wPq0Iyk. This project is not affiliated with Rourke or GenHQ; all text and code here were written independently.
 
-如果它帮你做出了片子，点个 Star 能让更多人找到它。
+## License
+
+[MIT](LICENSE). The Tallybird name and logo in the example are made up and ship under MIT with the repo; the sounds `synth.py` generates are free for commercial use too.
 
 ---
 
-## English
+If it helped you ship a video, a ⭐ helps others find it.
 
-**motion-ad-skill** is an open-source Claude Skill for making 8–20 second product motion ads as code, rendered to 4K, with no AI image or video generation.
-Claude drafts a numbered storyboard first, waits for your approval, then builds the animation as an HTML page (or a Blender scene),
-renders it frame by frame to 3840×2160, runs automated checks (text overlapping the subject, centering, mesh collisions, rotation speed, lid seam alignment),
-and finally adds music and sound effects aligned to the key beats, mastered to -14 LUFS.
-
-```bash
-git clone https://gitee.com/risingjerry/motion-ad-skill.git ~/.claude/skills/motion-ad
-cd ~/.claude/skills/motion-ad
-npm install
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python scripts/doctor.py
-.venv/bin/python examples/minimal/build.py   # renders the 10 s 4K example with sound
-```
-
-Requirements: Node.js 18+, Python 3.9+, ffmpeg, Google Chrome or Chromium. Optional: Blender (product shots), macOS 14+ (automatic person masks for silhouette transitions).
-The docs and in-repo instructions are written in Chinese; script names, flags and outputs are self-explanatory.
-Inspired by a video from Rourke (GenHQ): https://www.youtube.com/watch?v=cDb-wPq0Iyk . All text and code here are original. MIT licensed.
+[![Star History Chart](https://api.star-history.com/svg?repos=risingjerry/motion-skill&type=Date)](https://star-history.com/#risingjerry/motion-skill&Date)

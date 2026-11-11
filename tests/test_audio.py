@@ -18,7 +18,7 @@ HAS_FFMPEG = shutil.which("ffmpeg") is not None
 class AudioTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tmp = tempfile.mkdtemp(prefix="motion-ad-audio-")
+        cls.tmp = tempfile.mkdtemp(prefix="motion-skill-audio-")
         synth.main(["kit", os.path.join(cls.tmp, "sfx")])
         synth.main(["bed", os.path.join(cls.tmp, "bed.wav"), "--duration", "12", "--hit", "7.5"])
 

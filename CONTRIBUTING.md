@@ -20,4 +20,4 @@ node --test tests/render.test.mjs
 
 - 新脚本：路径从命令行传入，不写死本机路径；检查类脚本最后一行打印 `GREEN` / `RED`，退出码 0 / 1。
 - 不提交任何音频、视频、3D 模型文件，也不提交品牌 logo、商店截图、真人照片（`tests/test_repo_hygiene.py` 会查一部分）。
-- 文档用简体中文，句子短、少术语。
+- Skill 文档（`SKILL.md`、`references/`）用简体中文，句子短、少术语；`README.md`（英文）和 `README.zh-CN.md`（中文）要同步改。

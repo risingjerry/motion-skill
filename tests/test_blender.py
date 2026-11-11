@@ -35,7 +35,7 @@ class BlenderTest(unittest.TestCase):
         self.assertIn("RED", r.stdout)
 
     def test_import_glb_and_usdz(self):
-        tmp = tempfile.mkdtemp(prefix="motion-ad-blender-")
+        tmp = tempfile.mkdtemp(prefix="motion-skill-blender-")
         try:
             blend = os.path.join(tmp, "demo.blend")
             subprocess.run([BLENDER, "-b", "--factory-startup", "-P", STUDIO, "--", "--demo", "--no-render", "--save-blend", blend],
