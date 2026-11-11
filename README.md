@@ -21,7 +21,7 @@ The 10-second promo above (for "Tallybird", a made-up budgeting app) was built f
 
 ## Install
 
-Needs Node.js 18+, Python 3.9+, ffmpeg and Google Chrome (or Chromium). Blender is optional.
+Needs Node.js 20+, Python 3.9+, ffmpeg and Google Chrome (or Chromium). Blender is optional.
 
 ```bash
 git clone https://github.com/risingjerry/motion-skill.git ~/.claude/skills/motion

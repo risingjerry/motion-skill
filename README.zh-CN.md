@@ -21,7 +21,7 @@
 
 ## 安装
 
-需要：Node.js 18+、Python 3.9+、ffmpeg、Google Chrome（或 Chromium）。Blender 可选。
+需要：Node.js 20+、Python 3.9+、ffmpeg、Google Chrome（或 Chromium）。Blender 可选。
 
 ```bash
 git clone https://github.com/risingjerry/motion-skill.git ~/.claude/skills/motion

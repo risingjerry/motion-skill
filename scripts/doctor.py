@@ -43,9 +43,9 @@ def check():
     if node:
         code, out = run(["node", "-v"])
         major = int(out.lstrip("v").split(".")[0]) if code == 0 and out.startswith("v") else 0
-        add("Node.js ≥ 18", major >= 18, True, out, "安装 Node.js 18 以上：https://nodejs.org")
+        add("Node.js ≥ 20", major >= 20, True, out, "安装 Node.js 20 以上：https://nodejs.org")
     else:
-        add("Node.js ≥ 18", False, True, "没找到 node", "安装 Node.js 18 以上：https://nodejs.org")
+        add("Node.js ≥ 20", False, True, "没找到 node", "安装 Node.js 20 以上：https://nodejs.org")
     pw = os.path.isdir(os.path.join(ROOT, "node_modules", "playwright-core"))
     add("npm 依赖 playwright-core", pw, True, "已安装" if pw else "没装", "在仓库根目录运行：npm install")
     if node and pw:

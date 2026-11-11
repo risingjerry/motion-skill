@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "engines": { "node": ">=18" },
+  "engines": { "node": ">=20" },
   "scripts": {
     "doctor": "python3 scripts/doctor.py",
     "test": "node --test tests/render.test.mjs && python3 -m unittest discover -s tests -v",

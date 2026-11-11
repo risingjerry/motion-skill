@@ -98,7 +98,7 @@ description: 用代码做 4K 动效短片，全程不用 AI 生图或生视频�
 
 ## 环境
 
-Node.js 18+、Python 3.9+（numpy、Pillow、opencv-python-headless）、ffmpeg、Google Chrome 或 Chromium。
+Node.js 20+、Python 3.9+（numpy、Pillow、opencv-python-headless）、ffmpeg、Google Chrome 或 Chromium。
 第 3 层需要 Blender（免费）；剪影转场的自动抠像需要 macOS 14+，其他系统用别的工具出蒙版。
 开始前跑 `python3 scripts/doctor.py`，缺什么先告诉对方怎么装。
 Skill 目录里有 `.venv` 时，Python 脚本用 `.venv/bin/python` 运行（Windows：`.venv\Scripts\python`）；Windows 上把 `python3` 换成 `python`。
