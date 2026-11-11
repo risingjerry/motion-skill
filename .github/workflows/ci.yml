@@ -8,22 +8,25 @@ on:
 jobs:
   test:
     name: test (Node ${{ matrix.node }}, Python ${{ matrix.python }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - node: "18"
+          # Python 3.9 builds are no longer published for newer Ubuntu images.
+          - os: ubuntu-24.04
+            node: "18"
             python: "3.9"
-          - node: "22"
+          - os: ubuntu-latest
+            node: "22"
             python: "3.13"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           cache: pip
