@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Tallybird 示例广告</title>
+<!--
+  最小示例：虚构的记账 App「Tallybird」，10 秒。
+  一枚硬币 → 翻面变成 App 图标 → 图标展开成手机界面 → 数字跳动 → 收回成图标 → 图标 + 字标结尾。
+  每一镜都由上一镜的同一个物体变出来，没有淡入淡出切换。分镜见 shots.json，声音见 sound.json。
+-->
+<style>
+  :root { --bg: #0c1110; --brand: #14a37f; --brand-dark: #0f5c49; --gold: #f2c14e; --ink: #f3f6f5; --muted: #8fa29d; }
+  html, body { margin: 0; background: var(--bg); overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden;
+           background: radial-gradient(ellipse at 50% 45%, #18211f 0%, var(--bg) 65%);
+           font-family: -apple-system, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; color: var(--ink); }
+  #world { position: absolute; inset: 0; }
+  #flipper { position: absolute; left: 50%; top: 50%; width: 0; height: 0; perspective: 1400px; }
+  #hero { position: absolute; transform-style: preserve-3d; }
+  .face { position: absolute; left: 0; top: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  /* 正面：硬币 */
+  #coin { border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffe08a, var(--gold) 55%, #c98f1d);
+          box-shadow: inset 0 0 0 14px rgba(255,255,255,.22), 0 30px 70px rgba(0,0,0,.5); display: grid; place-items: center;
+          color: #8a5a07; font-weight: 800; }
+  /* 背面：App 图标，之后长成手机屏 */
+  #app { background: var(--brand); overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,.55), 0 8px 20px rgba(0,0,0,.35); }
+  #bird { position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; margin: -75px 0 0 -75px; }
+  #ui { position: absolute; inset: 0; padding: 70px 34px 0; box-sizing: border-box; background: #f6f8f7; color: #13201d; }
+  #ui .cap { font-size: 22px; color: #6b7c77; }
+  #ui .amt { font-size: 64px; font-weight: 750; margin: 6px 0 30px; letter-spacing: -.01em; }
+  #ui .row { display: flex; align-items: center; gap: 16px; height: 86px; border-top: 1px solid #e3e8e6; font-size: 24px; }
+  #ui .dot { width: 40px; height: 40px; border-radius: 12px; }
+  #ui .row span:last-child { margin-left: auto; font-weight: 650; }
+  .line { position: absolute; font-size: 56px; font-weight: 650; white-space: nowrap; }
+  #wordmark { position: absolute; top: 50%; font-size: 96px; font-weight: 750; letter-spacing: -.01em; white-space: nowrap; transform: translateY(-52%); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="world">
+    <div id="flipper">
+      <div id="hero" data-qa="hero">
+        <div class="face" id="coin">¥</div>
+        <div class="face" id="app">
+          <div id="ui">
+            <div class="cap">本月支出</div>
+            <div class="amt" id="amt">¥ 0</div>
+            <div class="row"><div class="dot" style="background:#ffb547"></div><span>早餐</span><span>¥ 18</span></div>
+            <div class="row"><div class="dot" style="background:#5b8cff"></div><span>地铁</span><span>¥ 6</span></div>
+            <div class="row"><div class="dot" style="background:#ff6f61"></div><span>房租</span><span>¥ 2,200</span></div>
+            <div class="row"><div class="dot" style="background:#14a37f"></div><span>书</span><span>¥ 56</span></div>
+          </div>
+          <img id="bird" src="logo.svg" alt="Tallybird logo">
+        </div>
+      </div>
+    </div>
+    <div class="line" id="line1" data-qa="line1" data-qa-kind="text">每一笔，都记得</div>
+    <div class="line" id="line2" data-qa="line2" data-qa-kind="text">花在哪，一眼看清</div>
+    <div id="wordmark" data-qa="wordmark" data-qa-kind="text">Tallybird</div>
+  </div>
+</div>
+<script src="../../templates/motion-kit.js"></script>
+<script>
+const { track, reveal, span, ease, lerp, clamp } = MotionKit;
+
+// ===== 节奏：所有关键时刻都在这里，声音也按这些名字对齐（sound.json 里写 "beat:名字"） =====
+const BEATS = {
+  coin: 0.3,       // 硬币从一个点长出来
+  flip: 1.4,       // 开始翻面
+  icon: 2.9,       // 翻完，落成 App 图标
+  open: 3.2,       // 图标展开成手机屏
+  line1: 3.9,
+  rows: 4.1,       // 列表逐行出现
+  count: 5.4,      // 数字开始跳
+  line2: 5.9,
+  close: 7.4,      // 手机屏收回成图标
+  lockup: 8.2,     // 图标让位、字标出现（配乐最重的一拍落在这里）
+  end: 10.0,
+};
+
+const COIN = 260;
+const ICON = { w: 260, h: 260, r: 62 };
+const PHONE = { w: 430, h: 880, r: 58 };
+
+// 背面（图标 → 手机 → 图标）的尺寸和圆角：一条连续轨道
+const AW = track([[0, ICON.w], [BEATS.open, ICON.w], [BEATS.open + 1.0, PHONE.w, 'outQuint'], [BEATS.close, PHONE.w], [BEATS.close + 0.8, ICON.w, 'inOutCubic']]);
+const AH = track([[0, ICON.h], [BEATS.open, ICON.h], [BEATS.open + 1.0, PHONE.h, 'outQuint'], [BEATS.close, PHONE.h], [BEATS.close + 0.8, ICON.h, 'inOutCubic']]);
+const AR = track([[0, ICON.r], [BEATS.open, ICON.r], [BEATS.open + 1.0, PHONE.r], [BEATS.close, PHONE.r], [BEATS.close + 0.8, ICON.r]]);
+// 硬币大小：从 8px 的点长到硬币
+const CS = track([[0, 8], [BEATS.coin, 8], [BEATS.flip, COIN, 'outCubic']]);
+// 翻面角度：一次转 180°，中间最快，约 6°/帧
+const ROT = track([[0, 0], [BEATS.flip, 0], [BEATS.icon, 180, 'inOutSine']]);
+// 镜头：全片一直匀速缓推，画面不会停死
+const CAM = track([[0, 1.0], [BEATS.end, 1.09, 'linear']]);
+const GAP = 52;
+
+function lockupShift() {
+  const wm = document.getElementById('wordmark').offsetWidth;
+  return -(ICON.w + GAP + wm) / 2 + ICON.w / 2;   // 让“图标 + 字标”整组居中
+}
+
+function draw(t) {
+  document.getElementById('world').style.transform = `scale(${CAM(t)})`;
+
+  // 硬币 / 图标所在的翻转体
+  const rot = ROT(t);
+  const shift = track([[0, 0], [BEATS.lockup, 0], [BEATS.lockup + 0.9, lockupShift(), 'outCubic']])(t);
+  const w = rot < 90 ? CS(t) : AW(t);
+  const h = rot < 90 ? CS(t) : AH(t);
+  const hero = document.getElementById('hero');
+  hero.style.width = w + 'px';
+  hero.style.height = h + 'px';
+  hero.style.transform = `translate(${shift - w / 2}px, ${-h / 2}px) rotateY(${rot}deg)`;
+
+  const coin = document.getElementById('coin');
+  const cs = CS(t);
+  coin.style.width = coin.style.height = cs + 'px';
+  coin.style.fontSize = (cs * 0.48) + 'px';
+
+  const app = document.getElementById('app');
+  app.style.width = AW(t) + 'px';
+  app.style.height = AH(t) + 'px';
+  app.style.borderRadius = AR(t) + 'px';
+  app.style.transform = 'rotateY(180deg)';
+
+  // 手机界面在展开时浮现，收回前隐去；鸟 logo 反过来
+  const uiP = span(t, BEATS.open + 0.3, BEATS.open + 0.9) * (1 - span(t, BEATS.close - 0.2, BEATS.close + 0.3));
+  const ui = document.getElementById('ui');
+  ui.style.opacity = uiP.toFixed(3);
+  ui.querySelectorAll('.row').forEach((r, i) => {
+    const p = ease.outCubic(span(t, BEATS.rows + i * 0.18, BEATS.rows + i * 0.18 + 0.5));
+    r.style.opacity = p.toFixed(3);
+    r.style.transform = `translateY(${(1 - p) * 24}px)`;
+  });
+  const n = Math.round(2280 * ease.outCubic(span(t, BEATS.count, BEATS.count + 1.2)));
+  document.getElementById('amt').textContent = '¥ ' + n.toLocaleString('en-US');
+  const bird = document.getElementById('bird');
+  const birdP = 1 - span(t, BEATS.open, BEATS.open + 0.35) + span(t, BEATS.close + 0.3, BEATS.close + 0.8);
+  bird.style.opacity = clamp(birdP).toFixed(3);
+
+  // 文字：放在手机两侧，离手机外框留足空隙（layout_check 会量）
+  const l1 = document.getElementById('line1');
+  l1.style.right = (960 + PHONE.w / 2 + 90) + 'px';
+  l1.style.top = '420px';
+  reveal(l1, t, BEATS.line1, { out: BEATS.close - 0.6 });
+  const l2 = document.getElementById('line2');
+  l2.style.left = (960 + PHONE.w / 2 + 90) + 'px';
+  l2.style.top = '560px';
+  reveal(l2, t, BEATS.line2, { out: BEATS.close - 0.4 });
+
+  const wm = document.getElementById('wordmark');
+  // 字标跟着图标走：始终贴在图标右边 GAP 处，图标让位时一起滑到最终位置，不会压到图标
+  wm.style.left = (960 + shift + ICON.w / 2 + GAP) + 'px';
+  reveal(wm, t, BEATS.lockup + 0.35, { stagger: 0.05, dur: 0.7 });
+}
+
+MotionKit.define({ duration: BEATS.end, fps: 30, size: [1920, 1080], beats: BEATS, draw, stage: '#stage' });
+</script>
+</body>
+</html>

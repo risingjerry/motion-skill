@@ -1,0 +1,17 @@
+{
+  "name": "motion-ad-skill",
+  "version": "0.1.0",
+  "description": "用代码做 8–20 秒产品动效广告片的 Claude Skill：分镜、HTML/Blender 渲染 4K、逐帧检查、配乐音效混音。",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "doctor": "python3 scripts/doctor.py",
+    "test": "node --test tests/render.test.mjs && python3 -m unittest discover -s tests -v",
+    "example": "python3 examples/minimal/build.py"
+  },
+  "dependencies": {
+    "playwright-core": "1.65.0"
+  }
+}

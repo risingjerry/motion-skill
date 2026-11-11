@@ -1,0 +1,24 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  #stage { position: relative; width: 320px; height: 180px; overflow: hidden; background: #000; }
+  #box { position: absolute; top: 60px; width: 60px; height: 60px; background: #f00; }
+  #label { position: absolute; left: 20px; top: 140px; color: #fff; font: 16px sans-serif; }
+</style>
+<div id="stage">
+  <div id="box" data-qa="box"></div>
+  <div id="label" data-qa="label" data-qa-kind="text">hi</div>
+</div>
+<script src="../../templates/motion-kit.js"></script>
+<script>
+  // 测试用：红块 0–1 秒从左走到右；字 0.5 秒后出现
+  const X = MotionKit.track([[0, 0], [1, 260, 'linear']]);
+  MotionKit.define({
+    duration: 1, fps: 10, size: [320, 180], beats: { go: 0, half: 0.5 },
+    draw(t) {
+      document.getElementById('box').style.left = X(t) + 'px';
+      document.getElementById('label').style.visibility = t >= 0.5 ? 'visible' : 'hidden';
+    },
+  });
+</script>

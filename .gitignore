@@ -1,0 +1,10 @@
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+out/
+examples/minimal/out/
+*.mp4
+*.mov
+*.wav
+.DS_Store

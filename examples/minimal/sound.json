@@ -1,0 +1,21 @@
+{
+ "_说明": "路径相对 build.py 的输出目录（mix.py --base）。时间用 beat:名字 引用 ad.html 里 BEATS 的节拍，后面可以 +/- 秒数。",
+ "beats": "ad.beats.json",
+ "offset": 0.0,
+ "music": {"file": "audio/bed.wav", "hit_in_file": "auto", "hit_at": "beat:lockup", "gain_db": 0, "fade_in": 0.4, "fade_out": [9.2, 10.0]},
+ "cues": [
+  {"name": "硬币冒出来", "file": "audio/sfx/pop.wav", "at": "beat:coin", "align": "onset", "gain_db": -10},
+  {"name": "翻面", "file": "audio/sfx/whoosh.wav", "at": "beat:flip+0.75", "align": "peak", "gain_db": -9},
+  {"name": "落成图标", "file": "audio/sfx/click.wav", "at": "beat:icon", "align": "onset", "gain_db": -8},
+  {"name": "展开成手机", "file": "audio/sfx/whoosh.wav", "at": "beat:open+0.35", "align": "peak", "gain_db": -12},
+  {"name": "第 1 行", "file": "audio/sfx/tick.wav", "at": "beat:rows", "align": "onset", "gain_db": -16},
+  {"name": "第 2 行", "file": "audio/sfx/tick.wav", "at": "beat:rows+0.18", "align": "onset", "gain_db": -16},
+  {"name": "第 3 行", "file": "audio/sfx/tick.wav", "at": "beat:rows+0.36", "align": "onset", "gain_db": -16},
+  {"name": "第 4 行", "file": "audio/sfx/tick.wav", "at": "beat:rows+0.54", "align": "onset", "gain_db": -16},
+  {"name": "数字停住", "file": "audio/sfx/shimmer.wav", "at": "beat:count+1.0", "align": "onset", "gain_db": -18},
+  {"name": "收回", "file": "audio/sfx/whoosh.wav", "at": "beat:close+0.4", "align": "peak", "gain_db": -12},
+  {"name": "字标", "file": "audio/sfx/shimmer.wav", "at": "beat:lockup+0.35", "align": "onset", "gain_db": -20}
+ ],
+ "duck": {"depth_db": 4, "release": 0.3},
+ "loudness": {"lufs": -14, "true_peak": -1.0}
+}

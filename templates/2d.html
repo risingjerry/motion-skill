@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>2D 起步模板</title>
+<!--
+  2D 起步模板：一个形状一路变形下去（点 → 圆 → 图标 → 界面卡片 → 图标+字标）。
+  用法：
+    1. 把这个文件、motion-kit.js 复制到你的项目文件夹，换成真 logo、真颜色、真截图。
+    2. 只改下面 BEATS 里的时间点就能重新卡节奏。
+    3. 浏览器里看：打开文件加 ?play 循环播放，加 ?at=3.2 看某一刻。
+    4. 出片：node scripts/render.mjs video 2d.html out.mp4 --scale 2   （1920x1080 页面 → 3840x2160）
+  data-qa="名字" 标出要检查的元素；data-qa-kind="text" 是文字，其余默认是主体（物体）。
+-->
+<style>
+  :root { --bg: #0e0f13; --brand: #4f7cff; --ink: #f4f5f7; --muted: #9aa0ad; }
+  html, body { margin: 0; background: var(--bg); overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--bg);
+           font-family: -apple-system, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; color: var(--ink); }
+  #world { position: absolute; inset: 0; }
+  /* 主角：一个会变形的块。位置都以画面正中为原点 */
+  #hero { position: absolute; left: 50%; top: 50%; background: var(--brand); overflow: hidden;
+          box-shadow: 0 30px 80px rgba(0,0,0,.45), 0 6px 18px rgba(0,0,0,.35); }
+  #glyph { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; margin: -60px 0 0 -60px; }
+  .bar { position: absolute; left: 48px; height: 22px; border-radius: 11px; background: rgba(255,255,255,.85); }
+  #headline { position: absolute; left: 0; right: 0; text-align: center; font-size: 64px; font-weight: 600; letter-spacing: .02em; }
+  #wordmark { position: absolute; top: 50%; font-size: 88px; font-weight: 700; letter-spacing: .01em; transform: translateY(-50%); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="world">
+    <div id="hero" data-qa="hero">
+      <div class="bar" style="top:60px;width:52%"></div>
+      <div class="bar" style="top:110px;width:78%;opacity:.6"></div>
+      <div class="bar" style="top:160px;width:64%;opacity:.6"></div>
+      <svg id="glyph" viewBox="0 0 120 120" aria-label="占位 logo">
+        <!-- 占位 logo：换成你自己的 SVG -->
+        <circle cx="60" cy="60" r="40" fill="none" stroke="#fff" stroke-width="12"/>
+        <circle cx="60" cy="60" r="12" fill="#fff"/>
+      </svg>
+    </div>
+    <div id="headline" data-qa="headline" data-qa-kind="text">一句话说清楚它帮你做什么</div>
+    <div id="wordmark" data-qa="wordmark" data-qa-kind="text">Brand</div>
+  </div>
+</div>
+<script src="motion-kit.js"></script>
+<script>
+const { track, reveal, span, ease, mixColor } = MotionKit;
+
+// ===== 节奏都在这里：改时间只改这一块 =====
+const BEATS = {
+  grow: 0.4,      // 点开始长大
+  icon: 1.6,      // 圆开始变成图标
+  card: 3.0,      // 图标展开成界面卡片
+  text: 3.6,      // 标题出现
+  back: 5.6,      // 卡片收回成图标
+  lockup: 6.4,    // 字标出现，进入结尾
+  end: 8.0,
+};
+
+// 主角的尺寸、圆角都是同一条连续的关键帧轨道 → 每个镜头从上一个镜头变出来，中间没有淡入淡出
+const W = track([[0, 24], [BEATS.grow, 24], [BEATS.icon, 260, 'outCubic'], [BEATS.card, 300], [BEATS.card + 1.0, 900, 'outQuint'], [BEATS.back, 900], [BEATS.lockup, 240, 'inOutCubic']]);
+const H = track([[0, 24], [BEATS.grow, 24], [BEATS.icon, 260, 'outCubic'], [BEATS.card, 300], [BEATS.card + 1.0, 520, 'outQuint'], [BEATS.back, 520], [BEATS.lockup, 240, 'inOutCubic']]);
+const R = track([[0, 12], [BEATS.icon, 130], [BEATS.card, 72, 'inOutCubic'], [BEATS.card + 1.0, 36], [BEATS.back, 36], [BEATS.lockup, 60]]);
+// 结尾时图标往左让出位置给字标；按字标实际宽度算，让“图标+字标”整组落在正中
+const GAP = 48;
+let X = null;
+function lockupShift() {
+  const wmW = document.getElementById('wordmark').offsetWidth;
+  return -(240 + GAP + wmW) / 2 + 120;
+}
+// 镜头一直在慢慢推近，画面永远不完全静止
+const CAM = track([[0, 1.0], [BEATS.end, 1.08, 'linear']]);
+
+function draw(t) {
+  document.getElementById('world').style.transform = `scale(${CAM(t)})`;
+  const hero = document.getElementById('hero');
+  const w = W(t), h = H(t);
+  hero.style.width = w + 'px';
+  hero.style.height = h + 'px';
+  hero.style.borderRadius = R(t) + 'px';
+  X = track([[0, 0], [BEATS.lockup, 0], [BEATS.lockup + 0.9, lockupShift(), 'outCubic']]);
+  const x = X(t);
+  hero.style.transform = `translate(${x - w / 2}px, ${-h / 2}px)`;
+  hero.style.background = mixColor('#ffffff', '#4f7cff', ease.outCubic(span(t, BEATS.grow, BEATS.icon)));
+
+  // 卡片里的“界面条”只在展开时出现；logo 只在图标状态出现
+  const cardP = span(t, BEATS.card + 0.4, BEATS.card + 1.0) * (1 - span(t, BEATS.back - 0.3, BEATS.back + 0.2));
+  hero.querySelectorAll('.bar').forEach((b, i) => {
+    const p = ease.outCubic(span(cardP, i * 0.15, i * 0.15 + 0.6));
+    b.style.opacity = (p * (i ? 0.6 : 1)).toFixed(3);
+    b.style.transform = `translateX(${(1 - p) * -30}px)`;
+  });
+  const glyphP = span(t, BEATS.icon + 0.5, BEATS.card - 0.1) * (1 - span(t, BEATS.card, BEATS.card + 0.3)) + span(t, BEATS.back + 0.2, BEATS.lockup);
+  const glyph = document.getElementById('glyph');
+  glyph.style.opacity = Math.min(1, glyphP).toFixed(3);
+  glyph.style.transform = `scale(${0.8 + 0.2 * ease.outCubic(Math.min(1, glyphP))})`;
+
+  // 标题在卡片下方，离卡片留足距离
+  const headline = document.getElementById('headline');
+  headline.style.top = (540 + 520 / 2 + 70) + 'px';
+  reveal(headline, t, BEATS.text, { out: BEATS.back - 0.5 });
+
+  const wm = document.getElementById('wordmark');
+  wm.style.left = (960 + lockupShift() + 120 + GAP) + 'px';
+  reveal(wm, t, BEATS.lockup + 0.3, { stagger: 0.05 });
+}
+
+MotionKit.define({ duration: BEATS.end, fps: 30, size: [1920, 1080], beats: BEATS, draw, stage: '#stage' });
+</script>
+</body>
+</html>

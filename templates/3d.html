@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>3D 起步模板（CSS 3D）</title>
+<!--
+  3D 起步模板：几块“手机屏”摆在三维空间里，镜头沿一条连续的路线滑过去，最后停在正中那块屏上。
+  不需要 WebGL、不需要显卡，CSS 3D 变换在无头浏览器里也能稳定出 4K。
+  - 把 .screen 里的占位界面换成真机截图：<img src="真截图.png">（先抹掉通知、头像、手机号等个人信息）
+  - 镜头参数（偏航、俯仰、距离、看向哪一点）都由同一个进度 u 驱动，方向不会中途掉头
+  - 景深：每块屏按离对焦距离的远近自动加模糊，离焦越远越糊
+  出片：node scripts/render.mjs video 3d.html out.mp4 --scale 2
+-->
+<style>
+  html, body { margin: 0; background: #08090c; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden;
+           background: radial-gradient(ellipse at 50% 40%, #1b1e27 0%, #08090c 70%);
+           font-family: -apple-system, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; color: #f2f3f5; }
+  #viewport { position: absolute; inset: 0; perspective: 1600px; perspective-origin: 50% 50%; }
+  #scene { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
+  .screen { position: absolute; width: 390px; height: 844px; margin: -422px 0 0 -195px; border-radius: 54px; overflow: hidden;
+            background: linear-gradient(160deg, #2b3450, #151925); box-shadow: 0 40px 120px rgba(0,0,0,.6);
+            outline: 10px solid #1d1f25; backface-visibility: hidden; }
+  .screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ui { position: absolute; left: 28px; right: 28px; border-radius: 18px; background: rgba(255,255,255,.1); }
+  #headline { position: absolute; left: 0; right: 0; top: 935px; text-align: center; font-size: 56px; font-weight: 650; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="viewport"><div id="scene">
+    <div class="screen" id="s0" data-qa="screen-left"></div>
+    <div class="screen" id="s1" data-qa="screen-center"></div>
+    <div class="screen" id="s2" data-qa="screen-right"></div>
+  </div></div>
+  <div id="headline" data-qa="headline" data-qa-kind="text">把它放进三维空间</div>
+</div>
+<script src="motion-kit.js"></script>
+<script>
+const { lerp, ease, span, reveal } = MotionKit;
+
+const BEATS = { start: 0, settle: 5.2, text: 5.6, end: 8.0 };
+const P = 1600; // 和 CSS 里的 perspective 一致
+
+// 三块屏在世界里的位置（像素）和朝向（度）
+const SCREENS = [
+  { id: 's0', pos: [-560, 30, -260], yaw: 18 },
+  { id: 's1', pos: [0, 0, 0], yaw: 0 },
+  { id: 's2', pos: [560, 30, -260], yaw: -18 },
+];
+// 占位界面：几条圆角条。换成真截图时删掉这段
+for (const s of SCREENS) {
+  const el = document.getElementById(s.id);
+  [[110, 70], [210, 300], [540, 120], [690, 90]].forEach(([top, h]) => {
+    const d = document.createElement('div'); d.className = 'ui'; d.style.top = top + 'px'; d.style.height = h + 'px'; el.appendChild(d);
+  });
+  el.style.transform = `translate3d(${s.pos[0]}px, ${s.pos[1]}px, ${s.pos[2]}px) rotateY(${s.yaw}deg)`;
+}
+
+// 镜头：一个进度 u 驱动所有参数，每个参数都单调变化 → 不会推了又拉、转了又回
+function camera(t) {
+  const u = ease.inOutSine(span(t, BEATS.start, BEATS.settle));
+  const drift = span(t, BEATS.settle, BEATS.end) * 0.04;         // 停下后继续极慢地推，画面不死
+  return {
+    yaw: lerp(-38, 0, u),
+    pitch: lerp(16, 0, u),
+    dist: lerp(3200, 2000, u) * (1 - drift),
+    target: [lerp(150, 0, u), 0, lerp(-120, 0, u)],
+  };
+}
+
+function sceneTransform(c) {
+  return `translateZ(${P - c.dist}px) rotateX(${-c.pitch}deg) rotateY(${c.yaw}deg) translate3d(${-c.target[0]}px, ${-c.target[1]}px, ${-c.target[2]}px)`;
+}
+
+function draw(t) {
+  const c = camera(t);
+  const tr = sceneTransform(c);
+  document.getElementById('scene').style.transform = tr;
+  // 景深：算每块屏中心在镜头坐标里的深度，和对焦距离（= 镜头到目标的距离）比
+  const m = new DOMMatrix(tr);
+  for (const s of SCREENS) {
+    const p = m.transformPoint(new DOMPoint(s.pos[0], s.pos[1], s.pos[2]));
+    const depth = P - p.z;
+    const blur = Math.min(10, Math.abs(depth - c.dist) / 140);
+    document.getElementById(s.id).style.filter = blur < 0.3 ? 'none' : `blur(${blur.toFixed(2)}px)`;
+  }
+  reveal(document.getElementById('headline'), t, BEATS.text);
+}
+
+MotionKit.define({ duration: BEATS.end, fps: 30, size: [1920, 1080], beats: BEATS, draw, stage: '#stage' });
+</script>
+</body>
+</html>

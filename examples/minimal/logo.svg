@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Tallybird 示例 logo：虚构品牌，本仓库自己画的，随 MIT 许可使用 -->
+  <path d="M26 72 C26 45 46 28 70 28 C86 28 96 38 99 50 L112 55 L99 61 C96 84 78 98 56 98 C38 98 26 88 26 72 Z" fill="#ffffff"/>
+  <circle cx="79" cy="48" r="5.5" fill="#0f5c49"/>
+  <path d="M40 66 L70 66 L55 86 Z" fill="#0f5c49" opacity="0.9"/>
+</svg>
