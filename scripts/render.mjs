@@ -139,7 +139,7 @@ function startEncoder(out, fps, crf) {
     '-hide_banner', '-loglevel', 'error', '-y',
     '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-',
     '-vf', 'scale=out_color_matrix=bt709:out_range=tv,format=yuv420p',
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', String(crf), '-tune', 'animation',
+    '-c:v', 'libx264', '-crf', String(crf), '-tune', 'animation', '-preset', 'slow',
     '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv',
     '-movflags', '+faststart', out,
   ];
@@ -268,7 +268,7 @@ async function cmdBoard(specFile, out, opt) {
     const cols = Number(spec.columns ?? 3);
     const cells = spec.shots.map((s) => `
       <div class="cell">
-        <div class="pic">${pics[s.id] ? `<img src="${pics[s.id]}">` : `<div class="sketch">${esc(s.picture)}</div>`}<span class="num">${esc(s.id)}</span></div>
+        <div class="pic">${pics[s.id] ? `<img src="${pics[s.id]}">` : `<div class="sketch">${esc(s.picture)}</div>`}<span class="badge">${esc(s.id)}</span></div>
         <div class="meta"><b>${esc(s.from)}–${esc(s.to)} 秒</b>${s.line ? ` · 字：「${esc(s.line)}」` : ''}</div>
         <div class="row"><i>画面</i>${esc(s.picture)}</div>
         <div class="row"><i>动作</i>${esc(s.move)}</div>
@@ -281,7 +281,7 @@ async function cmdBoard(specFile, out, opt) {
       .cell{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12)}
       .pic{position:relative;aspect-ratio:16/9;background:#111} .pic img{width:100%;height:100%;object-fit:cover;display:block}
       .sketch{color:#bbb;padding:18px;font-size:14px}
-      .num{position:absolute;left:10px;top:8px;background:#ff5a36;color:#fff;font-weight:700;border-radius:14px;min-width:28px;text-align:center;padding:2px 8px}
+      .badge{position:absolute;left:10px;top:8px;background:#ff5a36;color:#fff;font-weight:700;border-radius:14px;min-width:28px;text-align:center;padding:2px 8px}
       .meta{padding:8px 12px 2px} .row{padding:2px 12px;color:#444} .row:last-child{padding-bottom:10px}
       .row i{font-style:normal;color:#999;margin-right:8px}
     </style><h1>${esc(spec.title ?? '分镜')}</h1><div class="sub">${esc(spec.note ?? '按编号提意见，例如“4 变 5 不顺”')}</div><div class="grid">${cells}</div>`;

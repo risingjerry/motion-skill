@@ -71,7 +71,8 @@
     const pieces = splitText(el, by);
     let shown = 0;
     pieces.forEach((s, i) => {
-      let p = ease.outCubic(span(t, start + i * stagger, start + i * stagger + dur));
+      const t0 = start + stagger * i;
+      let p = ease.outCubic(span(t, t0, t0 + dur));
       if (out !== null) p *= 1 - ease.inCubic(span(t, out + i * stagger * 0.5, out + i * stagger * 0.5 + outDur));
       s.style.opacity = p.toFixed(3);
       s.style.filter = p >= 0.999 ? 'none' : `blur(${((1 - p) * blur).toFixed(2)}px)`;
@@ -106,15 +107,16 @@
       addEventListener('resize', fit);
     }
     const q = new URLSearchParams(location.search);
-    M.ready.then(() => {
-      if (q.has('play')) {
+    const startPreview = () => {
+      if (q.get('play') !== null) {
         const t0 = performance.now();
         const loop = () => { M.seek(((performance.now() - t0) / 1000) % M.duration); requestAnimationFrame(loop); };
         requestAnimationFrame(loop);
       } else {
         M.seek(Number(q.get('at') || 0));
       }
-    });
+    };
+    M.ready.then(startPreview);
     return M;
   }
 

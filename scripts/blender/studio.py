@@ -175,17 +175,16 @@ def import_model(path):
         raise SystemExit(f"不支持的格式 {ext}。支持：{' '.join(IMPORTERS)}")
     if not os.path.exists(path):
         raise SystemExit(f"找不到模型文件：{path}")
-    before = set(bpy.data.objects)
+    names_before = {o.name for o in bpy.data.objects}
     IMPORTERS[ext](path)
-    new = [o for o in bpy.data.objects if o not in before]
-    if not new:
+    imported = [bpy.data.objects[n] for n in {o.name for o in bpy.data.objects} - names_before]
+    if not imported:
         raise SystemExit("导入后没有任何物体")
     root = bpy.data.objects.new("Subject", None)
     bpy.context.collection.objects.link(root)
-    for o in new:
-        if o.parent is None:
-            o.parent = root
-    for o in new:  # 模型自带的灯和相机都去掉，保证只有一盏灯
+    for o in [x for x in imported if not x.parent]:
+        o.parent = root
+    for o in imported:  # 模型自带的灯和相机都去掉，保证只有一盏灯
         if o.type in {"LIGHT", "CAMERA"}:
             bpy.data.objects.remove(o, do_unlink=True)
     return root

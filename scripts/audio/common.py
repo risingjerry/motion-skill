@@ -24,9 +24,12 @@ def ff():
 def load(path, sr=SR):
     """读任意音频/视频里的声音，返回 (n, 2) float64，采样率 sr。"""
     need_ffmpeg()
-    raw = subprocess.run([ff(), "-v", "error", "-i", path, "-vn", "-ac", "2", "-ar", str(sr), "-f", "f32le", "-"],
-                         capture_output=True, check=True).stdout
-    return np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64)
+    proc = subprocess.run([ff(), "-v", "error", "-i", path, "-vn", "-ac", "2", "-ar", str(sr), "-f", "f32le", "-"],
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        raise RuntimeError(f"读不了音频 {path}：{proc.stderr.decode(errors='ignore').strip()}")
+    pcm = np.frombuffer(proc.stdout, dtype="<f4")
+    return pcm.astype(np.float64).reshape((len(pcm) // 2, 2))
 
 
 def save(a, path, sr=SR, codec="pcm_s24le"):
