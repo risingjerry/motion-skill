@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  #stage { position: relative; width: 320px; height: 180px; overflow: hidden; background: #000; }
+  #line { position: absolute; left: 20px; top: 70px; color: #fff; font: 24px sans-serif; }
+</style>
+<div id="stage">
+  <div id="line" data-qa="line" data-qa-kind="text">每一笔都记得</div>
+</div>
+<script src="../../templates/motion-kit.js"></script>
+<script>
+  // 测试用：0.2 秒开始逐词往上滑。拆出来的块数放进 beats.pieces，测试从 info 里读
+  const el = document.getElementById('line');
+  const n = MotionKit.splitText(el, 'word', true).length;
+  MotionKit.define({
+    duration: 1, fps: 10, size: [320, 180], beats: { text: 0.2, pieces: n },
+    draw(t) { MotionKit.slideUp(el, t, 0.2, { stagger: 0.05, dur: 0.3 }); },
+  });
+</script>

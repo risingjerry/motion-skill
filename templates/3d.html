@@ -37,7 +37,7 @@
 </div>
 <script src="motion-kit.js"></script>
 <script>
-const { lerp, ease, span, reveal } = MotionKit;
+const { lerp, ease, span, reveal, slideUp } = MotionKit;
 
 const BEATS = { start: 0, settle: 5.2, text: 5.6, end: 8.0 };
 const P = 1600; // 和 CSS 里的 perspective 一致
@@ -85,7 +85,7 @@ function draw(t) {
     const blur = Math.min(10, Math.abs(depth - c.dist) / 140);
     document.getElementById(s.id).style.filter = blur < 0.3 ? 'none' : `blur(${blur.toFixed(2)}px)`;
   }
-  reveal(document.getElementById('headline'), t, BEATS.text);
+  slideUp(document.getElementById('headline'), t, BEATS.text);
 }
 
 MotionKit.define({ duration: BEATS.end, fps: 30, size: [1920, 1080], beats: BEATS, draw, stage: '#stage' });

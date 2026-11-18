@@ -47,40 +47,70 @@
     };
   }
 
-  // 把文字拆成逐字/逐词的 span，配合 reveal 做“从模糊浮上来变清楚”
-  function splitText(el, by = 'char') {
-    if (el.dataset.split) return [...el.querySelectorAll('.mk-piece')];
-    const text = el.textContent;
-    const parts = by === 'word' ? text.split(/(\s+)/) : [...text];
+  // 把一行字拆成小块：by = 'char'（逐字）或 'word'（逐词）。
+  // 逐词时：有空格按空格拆；中文这种没有空格的，用浏览器自带的分词（Intl.Segmenter），没有就退回逐字。
+  // 想自己定怎么断，就在字里用空格隔开，例如“想看的 刷一下 就有”。
+  function pieces(text, by) {
+    if (by !== 'word') return [...text];
+    if (/\s/.test(text.trim())) return text.split(/(\s+)/).filter((x) => x !== '');
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      return [...new Intl.Segmenter('zh', { granularity: 'word' }).segment(text)].map((x) => x.segment);
+    }
+    return [...text];
+  }
+
+  // mask = true 时每块外面再套一层“窗口”（overflow: hidden），字从窗口下沿滑上来，露出之前看不见
+  function splitText(el, by = 'char', mask = false) {
+    const key = by + (mask ? '+mask' : '');
+    if (el.dataset.split === key) return [...el.querySelectorAll('.mk-piece')];
+    const text = el.dataset.text || el.textContent;
+    el.dataset.text = text;
     el.textContent = '';
-    for (const part of parts) {
+    for (const part of pieces(text, by)) {
       const s = document.createElement('span');
       s.className = 'mk-piece';
       s.style.display = 'inline-block';
       s.style.whiteSpace = 'pre';
       s.textContent = part;
-      el.appendChild(s);
+      if (mask && part.trim()) {
+        const w = document.createElement('span');
+        w.className = 'mk-mask';
+        w.style.cssText = 'display:inline-block;overflow:hidden;vertical-align:bottom;padding:0.12em 0;margin:-0.12em 0';
+        w.appendChild(s);
+        el.appendChild(w);
+      } else {
+        el.appendChild(s);
+      }
     }
-    el.dataset.split = by;
+    el.dataset.split = key;
     return [...el.querySelectorAll('.mk-piece')];
   }
 
   // 文字出现：每一块晚 stagger 秒开始，dur 秒内从模糊、略低、透明变成清楚、到位、不透明。
   // out 给出消失开始时间（可选），消失是反过来走一遍但更快
-  function reveal(el, t, start, { stagger = 0.04, dur = 0.6, rise = 18, blur = 12, out = null, outDur = 0.35, by = 'char' } = {}) {
-    const pieces = splitText(el, by);
+  function reveal(el, t, start, { stagger = 0.04, dur = 0.6, rise = 18, blur = 12, out = null, outDur = 0.35, by = 'char', mask = false, curve = 'outCubic' } = {}) {
+    const list = splitText(el, by, mask);
+    const riseOf = (s) => (typeof rise === 'string' && rise.endsWith('%') ? (parseFloat(rise) / 100) * s.offsetHeight : rise);
     let shown = 0;
-    pieces.forEach((s, i) => {
+    let k = 0;
+    list.forEach((s) => {
+      const i = s.textContent.trim() ? k++ : k; // 空格不占节拍
       const t0 = start + stagger * i;
-      let p = ease.outCubic(span(t, t0, t0 + dur));
+      let p = ease[curve](span(t, t0, t0 + dur));
       if (out !== null) p *= 1 - ease.inCubic(span(t, out + i * stagger * 0.5, out + i * stagger * 0.5 + outDur));
-      s.style.opacity = p.toFixed(3);
-      s.style.filter = p >= 0.999 ? 'none' : `blur(${((1 - p) * blur).toFixed(2)}px)`;
-      s.style.transform = `translateY(${((1 - p) * rise).toFixed(2)}px)`;
+      s.style.opacity = (mask ? Math.min(1, p * 4) : p).toFixed(3);
+      s.style.filter = p >= 0.999 || blur <= 0 ? 'none' : `blur(${((1 - p) * blur).toFixed(2)}px)`;
+      s.style.transform = `translateY(${((1 - p) * riseOf(s)).toFixed(2)}px)`;
       shown = Math.max(shown, p);
     });
     // 整行完全没出现时把容器也藏起来，这样 probe / layout_check 不会把看不见的字算进去
     el.style.visibility = shown > 0.001 ? 'visible' : 'hidden';
+  }
+
+  // 逐词往上滑到位：现在高级片最常用的出字方式。一个词接一个词从下面滑上来，不弹跳、不逐字淡入。
+  // 和 reveal 参数一样，只是默认值不同：按词拆、带遮罩、从一整行高度下面滑上来、不加模糊
+  function slideUp(el, t, start, opts = {}) {
+    reveal(el, t, start, { by: 'word', mask: true, rise: '110%', blur: 0, stagger: 0.09, dur: 0.6, curve: 'outQuint', ...opts });
   }
 
   // 注册动画：define({ duration, fps, size, beats, draw })
@@ -120,5 +150,5 @@
     return M;
   }
 
-  root.MotionKit = { clamp, lerp, ease, span, mixColor, track, splitText, reveal, define };
+  root.MotionKit = { clamp, lerp, ease, span, mixColor, track, splitText, reveal, slideUp, define };
 })(window);

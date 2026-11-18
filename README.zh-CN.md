@@ -1,15 +1,14 @@
 <div align="center">
 
-# motion-skill
+# motion-skill：Claude 动效 Skill
 
-**一个让 Claude 用代码做 4K 动效短片的 Skill，全程不用 AI 生视频。**
+**装上它，Claude 就能用代码给你的产品做 4K 动效视频：先出分镜，你点头后渲染成片，再配好音乐和音效。全程不用 AI 生视频，也不用你会剪辑。**
 
-产品发布片、App 宣传片、logo 动画、实物产品 3D 镜头、讲解动效、接真人实拍的剪影转场都能做。对 Claude 说“给我的 App 做一条 10 秒的发布视频”，它会先出带编号的分镜给你看，你点头后用 HTML（或 Blender）一帧一帧渲出 3840×2160 的成片，逐帧检查每个转场，最后按节拍配上配乐和音效。
-
+[![视频教程 · B 站](https://img.shields.io/badge/视频教程-B%20站-00A1D6?logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1n3s16fEkM)
+[![Video tutorial · YouTube](https://img.shields.io/badge/视频教程-YouTube-FF0000?logo=youtube&logoColor=white)](https://youtu.be/LmCttBxh5xg)
 [![CI](https://github.com/risingjerry/motion-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/risingjerry/motion-skill/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-7C5CFF.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/risingjerry/motion-skill?color=E8735F)](https://github.com/risingjerry/motion-skill/releases)
-[![GitHub stars](https://img.shields.io/github/stars/risingjerry/motion-skill?style=social)](https://github.com/risingjerry/motion-skill/stargazers)
 
 [English](README.md) · 简体中文
 
@@ -17,9 +16,62 @@
 
 </div>
 
-上面这条 10 秒示例（虚构的记账 App “Tallybird”的宣传片）就是用仓库自带的脚本从零做出来的：`python3 examples/minimal/build.py`，在一台 8 核笔记本上约 1 分钟出 4K 有声成片。画面全是代码和你的真素材，没有用任何生图、生视频模型。
+上面这条 10 秒的片子（虚构的记账 App “Tallybird”）是仓库自带的示例，一行命令就能在你电脑上重新做出来，出 4K 有声成片。画面全是代码和真素材，没有用任何生图、生视频模型。
 
-## 安装
+> **从视频过来的？** 这就是视频里说的那个免费 Skill。完整教程：[B 站](https://www.bilibili.com/video/BV1n3s16fEkM) · [YouTube](https://youtu.be/LmCttBxh5xg)。
+> 视频里的 Apple Music、AirPods、抖音那几条案例片用了这些品牌的素材，没有授权放进开源仓库；做法都在这个 Skill 里。
+
+## 三步用起来
+
+**第 1 步：装好 Claude Code。** 用 Claude 桌面 App 里的 Claude Code，或者终端里的 `claude` 都行。
+
+**第 2 步：把下面这段话原样发给 Claude Code，它会自己装好。**
+
+```text
+帮我安装这个 Skill：https://github.com/risingjerry/motion-skill
+按它 README 里“自己动手安装”那一节，装到 ~/.claude/skills/motion。
+缺 Node.js、Python、ffmpeg、Chrome 就先帮我装上（Mac 用 Homebrew），
+最后跑 doctor 检查，再跑一遍 1080p 的示例给我看结果。
+```
+
+要做 3D 实物镜头的话，再装一个免费的 [Blender](https://www.blender.org/download/)。装好就行，不用打开，Claude 会自己在后台用它。
+
+**第 3 步：建一个文件夹，放素材，跟 Claude 说一句话。**
+
+1. 新建一个文件夹，放进你的高清 logo（最好是 SVG 或透明背景的 PNG）和 App 的真实截图（先把头像、手机号这类个人信息抹掉）。
+2. 在 Claude Code 里打开这个文件夹。
+3. 对它说：
+
+```text
+用 motion 给我的 App 做一条 10 秒的宣传视频。素材都在这个文件夹里。
+先给我出带编号的分镜，我确认了再做。
+每个镜头都要从上一个镜头自然变出来，不要用交叉溶解。
+```
+
+它会先给你一张分镜图。哪里不满意直接说（比如“3 变 4 太快”），改到满意再让它渲染。画面定了，再把下载好的音效和配乐放进文件夹，让它按节拍配上。
+
+## 视频里的 12 个技巧，Skill 里都写进去了
+
+视频里讲的每一条，Claude 装了这个 Skill 后都会默认照做；你在对话里再强调一遍效果更稳。
+
+| # | 技巧 | Skill 里怎么做 |
+|---|---|---|
+| 1 | 用真实、高清的素材，不用商店宣传图，不让它凭记忆画 logo | 第 1 步先要真 logo、真截图；缺了先问你要 |
+| 2 | 先出带编号的分镜，你点头再动手 | 出一张分镜板（`render.mjs board`），没点头不做成片 |
+| 3 | 每个镜头从上一个镜头变出来，不用交叉溶解 | 分镜每格写清“哪个形状变成哪个形状”；拿不准就给你 2–3 个变法挑 |
+| 4 | 动作放在画面正中 | `layout_check.py` 逐帧量主体离中心多远 |
+| 5 | 画面一直有东西在动 | 整个画面全程慢推，没有静止帧 |
+| 6 | 先做画面，最后做声音 | 画面定稿才混音，节拍从渲染时写的节拍表读 |
+| 7 | 加景深，有电影感 | 3D 模板按离焦距离自动虚化背景 |
+| 8 | 结尾只留 App 图标，不加口号 | 结尾只留图标和字标 |
+| 9 | 字逐词往上滑到位，不弹跳、不逐字淡入 | `slideUp()`，中文自动分词 |
+| 10 | 让 Claude 写 Suno 配乐提示词，最响的一下卡在图标出现 | 它按片长和节拍写提示词；你生成后交回，`mix.py` 自动对齐最重一拍、裁长度、调响度 |
+| 11 | 3D 场景只开一盏灯 | Blender 棚拍脚本只放一盏灯、背景全黑 |
+| 12 | 拿真东西对照动画，一处一处改 | 同角度渲染和实物照片并排对照；脚本查穿模、合盖接缝、转速 |
+
+再补几条做案例片时踩过的坑：配乐和音效两样都要有（只有音效会“没感觉”）；全片只用一种嗖声会乏味；界面里别出现陌生人的头像和作品；3D 接实拍时别从纯黑一刀切进亮画面。都写在 [`references/`](references/) 里。
+
+## 自己动手安装
 
 需要：Node.js 20+、Python 3.9+、ffmpeg、Google Chrome（或 Chromium）。Blender 可选。
 
@@ -33,6 +85,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 应该看到每一项前面是 `OK`，最后一行是“必需的都齐了，可以开始。”；缺什么它会写出怎么装。
 Windows 用 `%USERPROFILE%\.claude\skills\motion`，把 `.venv/bin/` 换成 `.venv\Scripts\`。
+
+只想在某一个项目里用：把上面的 `~/.claude/skills/motion` 换成 `你的项目/.claude/skills/motion`。
 
 <details>
 <summary>也可以用 <code>npx skills</code> 安装</summary>
@@ -70,11 +124,13 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 ## 在 Claude Code、Codex 等 Agent 里用
 
-装到 `~/.claude/skills/motion` 后，Claude Code 会自动发现这个 Skill。直接说：
+装到 `~/.claude/skills/motion` 后，Claude Code 会自动发现这个 Skill。更多说法：
 
 - “用 motion 给我的记账 App 做一条 12 秒的发布视频，logo 在 `assets/logo.svg`，截图在 `assets/screens/`。”
 - “我有耳机充电盒的 glb 模型，做一条 Blender 单灯棚拍的开盖镜头，先给我分镜。”
 - “给我们的 logo 做一段 5 秒的开场动画，再用真截图做一段 20 秒的同步功能讲解动效。”
+- “画面定了。给这条片子写一段 Suno 配乐提示词，最响的那一下要落在图标出现的那一刻。”
+- “我把音效和配乐放进 sound 文件夹了，按节拍放到最准的时间点上。”
 
 Codex、Cursor 等其他 Agent 读仓库根目录的 [`AGENTS.md`](AGENTS.md)。
 
@@ -125,6 +181,21 @@ Codex、Cursor 等其他 Agent 读仓库根目录的 [`AGENTS.md`](AGENTS.md)。
 - 作者在 macOS 上实测；CI 在 Ubuntu 上跑测试和示例。
 
 ## 常见问题
+
+### motion-skill 是什么？
+一个免费开源的 Claude Skill（MIT 许可），也就是大家说的“Claude 动效 Skill”。装进 Claude Code 后，Claude 会按一套固定流程给你的产品做动效短片：备真素材 → 出编号分镜 → 写成 HTML 或 Blender 场景 → 逐帧渲染成 4K → 自己抽帧检查 → 配乐和音效对齐节拍。
+
+### 免费吗？要账号或 API Key 吗？
+Skill 本身免费，不需要额外的账号或密钥，所有脚本都在你电脑上跑。你需要的只是能用 Claude Code（它按你的 Claude 订阅或额度计费）。音效库、Suno 这类服务是你自己选的，用不用、花不花钱由你定。
+
+### 视频里的 Apple Music、AirPods、抖音案例片在仓库里吗？
+不在。那几条用了品牌的 logo、模型和界面，没有授权放进公开仓库。仓库里放的是同样做法的示例（虚构的 Tallybird），以及做那几条时总结的全部规矩和检查脚本。
+
+### 能和 AI 生成的图片、视频一起用吗？
+能。Skill 默认不调用任何生图、生视频模型，但你自己生成的图或视频放进素材文件夹，Claude 会把它们当素材用。
+
+### 用哪个 Claude 模型？
+Claude Code 里能用的模型都行。越新、越强的模型，写出来的动画越细，自查也越仔细。
 
 ### 不用 AI 生成视频，怎么做产品宣传片和动效？
 把动画写成代码。这里每一帧是一个 HTML 页面（或 Blender 场景），由时间 `t` 算出来；无头浏览器逐帧截图，ffmpeg 编成 4K 视频。“这里慢一点”只是改一个数字再渲一遍。

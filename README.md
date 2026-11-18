@@ -2,14 +2,13 @@
 
 # motion-skill
 
-**A Claude Skill that makes 4K motion graphics videos with code — no AI video generation.**
+**A Claude Code skill that makes 4K motion graphics videos with code. Claude drafts a numbered storyboard, renders the video after you approve it, then adds music and sound effects on the beat. No AI video generation, no editing skills needed.**
 
-Product launch videos, app promos, logo animations, 3D product shots, explainer animations, silhouette transitions into live footage. Tell Claude "make a 10-second launch video for my app". It drafts a numbered storyboard, waits for your OK, builds the animation as an HTML page (or a Blender scene), renders it frame by frame to 3840×2160, checks every transition, then adds music and sound effects on the beat.
-
+[![Video tutorial · YouTube](https://img.shields.io/badge/video%20tutorial-YouTube-FF0000?logo=youtube&logoColor=white)](https://youtu.be/LmCttBxh5xg)
+[![Video tutorial · Bilibili](https://img.shields.io/badge/video%20tutorial-Bilibili-00A1D6?logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1n3s16fEkM)
 [![CI](https://github.com/risingjerry/motion-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/risingjerry/motion-skill/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-7C5CFF.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/risingjerry/motion-skill?color=E8735F)](https://github.com/risingjerry/motion-skill/releases)
-[![GitHub stars](https://img.shields.io/github/stars/risingjerry/motion-skill?style=social)](https://github.com/risingjerry/motion-skill/stargazers)
 
 English · [简体中文](README.zh-CN.md)
 
@@ -17,9 +16,62 @@ English · [简体中文](README.zh-CN.md)
 
 </div>
 
-The 10-second promo above (for "Tallybird", a made-up budgeting app) was built from scratch by the example script in this repo: `python3 examples/minimal/build.py` renders it to 4K with sound in about a minute on an 8-core laptop. Every pixel comes from code and your own assets — no image or video model is involved.
+The 10-second promo above (for "Tallybird", a made-up budgeting app) ships as the example in this repo. One command rebuilds it on your machine as a 4K video with sound. Every pixel comes from code and real assets — no image or video model is involved.
 
-## Install
+> **Coming from the video?** This is the free skill from the tutorial ([YouTube](https://youtu.be/LmCttBxh5xg) · [Bilibili](https://www.bilibili.com/video/BV1n3s16fEkM), in Chinese).
+> The Apple Music, AirPods and Douyin case videos shown there use those brands' assets, so they can't ship in an open-source repo. The method behind them is all in this skill.
+
+## Get started in three steps
+
+**1. Install Claude Code** — the Claude desktop app's Code tab or the `claude` CLI both work.
+
+**2. Paste this into Claude Code. It installs everything for you.**
+
+```text
+Install this skill: https://github.com/risingjerry/motion-skill
+Follow the "Manual install" section of its README and put it in ~/.claude/skills/motion.
+If Node.js, Python, ffmpeg or Chrome is missing, install it first (Homebrew on a Mac).
+Then run the doctor check and the 1080p example, and show me the result.
+```
+
+For 3D product shots, also install the free [Blender](https://www.blender.org/download/). You never need to open it; Claude runs it in the background.
+
+**3. Make a folder, add your assets, and say one sentence.**
+
+1. Create a folder with your high-resolution logo (SVG or transparent PNG) and real screenshots of your app (blur out avatars, phone numbers and other personal info).
+2. Open that folder in Claude Code.
+3. Say:
+
+```text
+Use the motion skill to make a 10-second promo for my app. The assets are in this folder.
+Show me a numbered storyboard first and wait for my OK.
+Every shot should morph out of the previous one — no cross-dissolves.
+```
+
+You get a storyboard image first. Say what to change ("3 to 4 is too fast") until you like it, then let it render. Once the picture is final, drop your sound effects and music into the folder and ask Claude to place them on the beats.
+
+## The 12 tips from the video, built in
+
+Everything the tutorial teaches is the skill's default behavior. Repeating it in your prompt makes it even more reliable.
+
+| # | Tip | What the skill does |
+|---|---|---|
+| 1 | Use real, high-res assets — no store promo images, no logo drawn from memory | Asks for the real logo and screenshots first; asks you when something is missing |
+| 2 | Numbered storyboard first; build only after you approve | Draws a storyboard board (`render.mjs board`); no final render without your OK |
+| 3 | Every shot morphs out of the last one — no cross-dissolves | Each storyboard cell says which shape becomes which; offers 2–3 options when you're unsure |
+| 4 | Keep the action at the exact center of the frame | `layout_check.py` measures the subject's distance from center on every frame |
+| 5 | Something is always moving | A slow push runs through the whole piece; no frozen frames |
+| 6 | Picture first, sound last | Mixes only after the picture is locked, reading beats from the render's beat sheet |
+| 7 | Add depth of field for a cinematic look | The 3D template blurs cards by their distance from focus |
+| 8 | End on the app icon only — no slogan | Ends on the icon and wordmark |
+| 9 | Words slide up into place one by one — no bounce, no per-character fades | `slideUp()`, with automatic Chinese word splitting |
+| 10 | Let Claude write the Suno music prompt so the biggest hit lands on the icon | Writes the prompt from the cut's length and beats; after you generate it, `mix.py` aligns the hit, trims and sets loudness |
+| 11 | One light in 3D scenes | The Blender studio script uses one light and a black background |
+| 12 | Compare the animation with the real object, detail by detail | Same-angle renders next to real photos; scripts check collisions, lid seams and rotation speed |
+
+A few more lessons from making the case videos: you need both music and sound effects (effects alone feel empty); one whoosh for everything gets boring; no strangers' faces or posts inside your UI shots; don't hard-cut from a pitch-black 3D shot into bright live footage. All of it is in [`references/`](references/).
+
+## Manual install
 
 Needs Node.js 20+, Python 3.9+, ffmpeg and Google Chrome (or Chromium). Blender is optional.
 
@@ -32,6 +84,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 Every line of the doctor report should start with `OK`, and the last line says all required pieces are present. If something is missing, it prints how to install it. On Windows use `%USERPROFILE%\.claude\skills\motion` and `.venv\Scripts\` instead of `.venv/bin/`.
+
+To use it in one project only, clone into `your-project/.claude/skills/motion` instead.
 
 <details>
 <summary>Install with <code>npx skills</code> instead</summary>
@@ -69,12 +123,14 @@ The terminal prints the layout check (`LAYOUT_CHECK GREEN`) and a mix report (wh
 
 ## Use with Claude Code, Codex and other agents
 
-Once it is in `~/.claude/skills/motion`, Claude Code finds the skill by itself. Just ask:
+Once it is in `~/.claude/skills/motion`, Claude Code finds the skill by itself. More things to ask:
 
 - "Use the motion skill to make a 12-second launch video for my budgeting app. The logo is `assets/logo.svg`, screenshots are in `assets/screens/`."
 - "I have a GLB model of my earbuds case. Make a Blender single-light studio shot of it opening — show me the storyboard first."
 - "Animate our logo for a 5-second intro, and make a 20-second explainer of how sync works using our real screenshots."
 - "Slow down the morph from shot 3 to shot 4, and land the music's biggest hit on the icon."
+- "The picture is final. Write a Suno prompt for the music so the loudest hit lands when the icon appears."
+- "I put sound effects and music in the sound folder. Place them on the right beats."
 
 Codex, Cursor and other agents read [`AGENTS.md`](AGENTS.md) at the repo root. The skill instructions ([`SKILL.md`](SKILL.md), [`references/`](references/)) are written in Chinese; Claude and other modern agents follow them fine in any language you talk to them in.
 
@@ -125,6 +181,21 @@ Check scripts print `... GREEN` or `... RED` on their last line and exit 0 (gree
 - Tested by the author on macOS; CI runs the tests and the example on Ubuntu.
 
 ## FAQ
+
+### What is motion-skill?
+A free, open-source (MIT) Claude skill for motion graphics. Installed in Claude Code, it makes Claude follow one fixed workflow for product videos: collect real assets → numbered storyboard → HTML page or Blender scene → frame-by-frame 4K render → self-check on extracted frames → music and sound effects aligned to the beats.
+
+### Is it free? Do I need an account or API key?
+The skill is free and needs no extra account or key; every script runs on your machine. You only need Claude Code itself (billed through your Claude plan). Sound libraries or music generators such as Suno are your own choice.
+
+### Are the Apple Music, AirPods and Douyin videos from the tutorial in the repo?
+No. They use those brands' logos, models and UI, which can't be redistributed. The repo ships the same technique as a made-up example (Tallybird), plus every rule and check script learned while making those videos.
+
+### Can I mix in AI-generated images or video?
+Yes. The skill never calls an image or video model by itself, but anything you put in the asset folder — including AI-generated images or clips — is used as an asset.
+
+### Which Claude model should I use?
+Any model available in Claude Code works. Newer, stronger models write more detailed animation and check their own frames more carefully.
 
 ### How do I make a product video or motion graphics without AI video generation?
 Write the animation as code. Here each frame is an HTML page (or Blender scene) computed from time `t`; a headless browser captures every frame and ffmpeg encodes them to 4K. Changing "a bit slower here" means changing one number and re-rendering.

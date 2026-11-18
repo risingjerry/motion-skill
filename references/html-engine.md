@@ -28,7 +28,8 @@ CSS `@keyframes` 动画和 Web Animations 可以用：渲染脚本每帧会把�
 | `track([[t, 值, 缓动], ...])` | 关键帧轨道，返回 `f(t)`；值可以是数字或数组 |
 | `span(t, a, b)` | t 在 a–b 之间走了百分之几（0–1） |
 | `ease.outCubic` 等 | 缓动曲线 |
-| `reveal(el, t, 开始, 选项)` | 文字逐字从模糊浮上来变清楚；`out` 给出消失时间 |
+| `slideUp(el, t, 开始, 选项)` | 文字逐词往上滑到位（默认出字方式）；中文自动分词，想自己断就加空格；`out` 给出消失时间 |
+| `reveal(el, t, 开始, 选项)` | 文字逐字从模糊浮上来变清楚；`by: 'word'` 逐词、`mask: true` 带遮罩；`out` 给出消失时间 |
 | `mixColor(a, b, p)` | 两个颜色按比例混合 |
 
 ## 在浏览器里看
@@ -63,7 +64,7 @@ node scripts/render.mjs board shots.json board.png            # 分镜板
 ```
 
 `probe` 只记录看得见的元素（`display:none`、`visibility:hidden`、整体透明度 < 0.05 的都跳过）。
-`reveal()` 在文字完全没出现时会自动把容器设成 `visibility:hidden`。
+`reveal()` / `slideUp()` 在文字完全没出现时会自动把容器设成 `visibility:hidden`。
 
 ```bash
 python3 scripts/layout_check.py probe probe.json --center hero

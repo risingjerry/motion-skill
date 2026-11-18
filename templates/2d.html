@@ -46,7 +46,7 @@
 </div>
 <script src="motion-kit.js"></script>
 <script>
-const { track, reveal, span, ease, mixColor } = MotionKit;
+const { track, reveal, slideUp, span, ease, mixColor } = MotionKit;
 
 // ===== 节奏都在这里：改时间只改这一块 =====
 const BEATS = {
@@ -100,7 +100,8 @@ function draw(t) {
   // 标题在卡片下方，离卡片留足距离
   const headline = document.getElementById('headline');
   headline.style.top = (540 + 520 / 2 + 70) + 'px';
-  reveal(headline, t, BEATS.text, { out: BEATS.back - 0.5 });
+  // 标题逐词往上滑到位（不弹跳、不逐字淡入）；想自己断词就在字里加空格
+  slideUp(headline, t, BEATS.text, { out: BEATS.back - 0.5 });
 
   const wm = document.getElementById('wordmark');
   wm.style.left = (960 + lockupShift() + 120 + GAP) + 'px';

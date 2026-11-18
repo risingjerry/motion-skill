@@ -78,3 +78,18 @@ test('页面没有 MOTION 时给出明确报错', opts, () => {
   assert.notEqual(r.status, 0);
   assert.match(r.stderr, /MOTION/);
 });
+
+test('slideUp 出字前整行不可见，滑完后可见；中文按词拆成多块而不是逐字', opts, () => {
+  const page = path.join(ROOT, 'tests', 'fixtures', 'slideup.html');
+  const pieces = JSON.parse(run('info', page)).beats.pieces;
+  assert.ok(pieces > 1 && pieces < 6, `“每一笔都记得”应拆成 2–5 个词，实际 ${pieces}`);
+  const out = path.join(tmp, 'slide.json');
+  run('probe', page, out, '--step', '0.5', '--quiet');
+  const d = JSON.parse(fs.readFileSync(out, 'utf8'));
+  assert.deepEqual(d.frames[0].items.map((i) => i.name), []);
+  assert.deepEqual(d.frames[2].items.map((i) => i.name), ['line']);
+  const dir = path.join(tmp, 'slide-stills');
+  run('still', page, dir, '--times', '0.25,0.9', '--quiet');
+  const [a, b] = fs.readdirSync(dir).sort().map((f) => fs.readFileSync(path.join(dir, f)));
+  assert.notDeepEqual(a, b);
+});

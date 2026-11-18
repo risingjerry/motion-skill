@@ -1,7 +1,7 @@
 # 只用来声明 Python 版本和依赖（脚本直接运行，不需要 pip install 本仓库）
 [project]
 name = "motion-skill"
-version = "0.1.0"
+version = "0.2.0"
 description = "用代码做 4K 动效短片的 Claude Skill：产品发布片、App 宣传片、logo 动画、3D 产品镜头、讲解动效"
 requires-python = ">=3.9"
 license = { text = "MIT" }
